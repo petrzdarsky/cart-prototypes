@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notino Cart — Prototypes</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --pink:#DC0069; --ink:#000; --sub:#474747; --line:#E1E1E1; --bg:#F7F7F7; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Roboto,Arial,sans-serif;color:var(--ink);background:#fff;}
+  header{padding:48px 24px 24px;max-width:900px;margin:0 auto;}
+  h1{font-size:32px;font-weight:500;margin:0 0 8px;}
+  .sub{color:var(--sub);font-size:16px;line-height:24px;margin:0;}
+  .grid{max-width:900px;margin:24px auto 64px;padding:0 24px;display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+  .card{border:1px solid var(--line);border-radius:4px;padding:20px;text-decoration:none;
+    color:inherit;display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s ease,transform .15s ease;}
+  .card:hover{box-shadow:0 6px 24px rgba(0,0,0,.10);transform:translateY(-2px);}
+  .card__tag{font-size:12px;font-weight:500;color:var(--pink);text-transform:uppercase;letter-spacing:.04em;}
+  .card__title{font-size:18px;font-weight:500;}
+  .card__desc{font-size:14px;line-height:20px;color:var(--sub);}
+  .card__link{font-size:14px;font-weight:500;margin-top:4px;}
+  footer{max-width:900px;margin:0 auto;padding:24px;border-top:1px solid var(--line);
+    color:var(--sub);font-size:13px;line-height:20px;}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Notino Cart — Prototypes</h1>
+    <p class="sub">Living gallery of cart design prototypes. Each link opens a working prototype.</p>
+  </header>
+
+  <main class="grid">
+    <a class="card" href="./cart-interactive.html">
+      <span class="card__tag">Interactive</span>
+      <span class="card__title">Cart — interactive reference</span>
+      <span class="card__desc">Full recalc: steppers, services, voucher (try NOTINO10), gift selection, live total, points &amp; free-delivery bar.</span>
+      <span class="card__link">Open →</span>
+    </a>
+
+    <a class="card" href="./cart-reference.html">
+      <span class="card__tag">Static</span>
+      <span class="card__title">Cart — static reference</span>
+      <span class="card__desc">Pixel reference of the baseline cart screen. Source of truth for tokens and layout.</span>
+      <span class="card__link">Open →</span>
+    </a>
+
+    <!-- Add new prototypes by copying a card block above and pointing href to the new file. -->
+  </main>
+
+  <footer>
+    Add a prototype: drop its HTML file into this repository, then copy one card block in
+    index.html and point <code>href</code> at the new file. Commit — the gallery updates automatically.
+  </footer>
+</body>
+</html>
