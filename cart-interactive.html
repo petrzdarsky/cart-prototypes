@@ -4,25 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Notino – Nákupní košík (interaktivní)</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<style>body{margin:0;background:#e9e9ec;}</style>
-</head>
-<body>
-<div id="root"></div>
-<script type="text/babel" data-presets="react">
-const { useState, useMemo } = React;
-
-/* =========================================================================
-   Notino Cart — interactive golden reference
-   Full cross-component recalc: qty → line price → total → points → delivery bar,
-   service checkboxes → total, voucher → discount → total, gift radio select,
-   accordion collapse, item removal.
-   All visuals are token-driven (see design.md).
-   ========================================================================= */
-
-const CSS = `
+<style>
+body{margin:0;background:#e9e9ec;}
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 :root{
   --color-text-primary:#000; --color-text-secondary:#474747;
@@ -127,214 +110,210 @@ const CSS = `
 .btn{display:flex;padding:12px 24px;justify-content:center;align-items:center;gap:8px;border-radius:var(--radius-sm);cursor:pointer;font:500 14px/20px Roboto;}
 .btn--primary{background:var(--color-background-inverse);color:#fff;border:0;}
 .btn--secondary{background:var(--color-background-primary);color:var(--color-text-primary);border:1px solid var(--color-border-default);}
-`;
+</style>
+</head>
+<body>
+<div class="ncart" id="app"></div>
+<script>
+/* ---------- state ---------- */
+const state = {
+  items: [
+    { id:1, brand:"Hugo Boss", name:"Boss Bottled", subtitle:"parfémová voda pro muže 50 ml", unitPrice:1106, qty:1, image:"#d9c7b0" },
+    { id:2, brand:"Burberry", name:"Mr. Burberry", subtitle:"parfémová voda pro muže 30 ml", unitPrice:1306, qty:1, image:"#2b2b33" },
+    { id:3, brand:"Burberry", name:"Multiline", subtitle:"hrací karty", unitPrice:0, qty:1, image:"#8f1d1d", isGift:true },
+  ],
+  giftOpen: true,
+  selectedGift: null,
+  services: [
+    { key:"wrap", title:"Zabalit jako dárek", price:120, checked:false, hasInfo:true, desc:"Rádi vám vše zabalíme do luxusního dárkového balení. Více informací" },
+    { key:"eco", title:"Zabalit ekologicky", price:25, checked:false, hasInfo:true, desc:"Pomozte nám šetřit životní prostředí a využijte balení z recyklovaného materiálu bez plastu. Tato služba není dostupná při doručení do obchodů Notino a jejich výdejních míst." },
+    { key:"insure", title:"Pojistit zásilku", price:20, checked:false, hasInfo:false, desc:"V případě poškození či ztráty zásilky nečekáte na vyřešení situace v zákonné lhůtě. Stačí nám ztracenou nebo poškozenou zásilku nahlásit a zdokumentovat, a my Vám obratem pošleme úplně nové zboží." },
+  ],
+  giftOptions: [1,2,3,4].map(i => ({ id:i, brand:"Armani", name:"Code", desc:"sprchový gel pro muže 75 ml", image:"#1c1c1c" })),
+  voucherInput: "",
+  voucher: null,
+  voucherErr: false,
+};
+
+const FREE_DELIVERY_THRESHOLD = 1500;
+const POINTS_PER_KC = 1;
+const VOUCHERS = { NOTINO10: { type:"pct", value:0.1, label:"NOTINO10" } };
 
 /* ---------- helpers ---------- */
-const fmt = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-const kc = (n) => `${fmt(n)} Kč`;
-
-const FREE_DELIVERY_THRESHOLD = 1500; // Kč
-const POINTS_PER_KC = 1;
-const VOUCHERS = { NOTINO10: { type: "pct", value: 0.1, label: "NOTINO10" } };
+const fmt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+const kc  = n => fmt(n) + " Kč";
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
 /* ---------- icons ---------- */
-const TruckIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M3.33268 3.33325C2.41221 3.33325 1.66602 4.07944 1.66602 4.99992V14.1666C1.66602 15.0871 2.41221 15.8333 3.33268 15.8333H3.47494C3.81813 16.8042 4.74417 17.4999 5.83268 17.4999C6.9212 17.4999 7.84723 16.8042 8.19043 15.8333H12.6416C12.9848 16.8042 13.9108 17.4999 14.9993 17.4999C16.1525 17.4999 17.1233 16.7191 17.412 15.6574C17.9579 15.3837 18.3327 14.8189 18.3327 14.1666V11.078C18.3327 10.7584 18.2408 10.4456 18.068 10.1767L16.3035 7.43199C15.9968 6.95495 15.4686 6.66659 14.9015 6.66659H13.3327V3.33325H3.33268ZM16.666 13.1365V11.078L14.9015 8.33325H13.3327V13.1365C13.775 12.7406 14.3591 12.4999 14.9993 12.4999C15.6396 12.4999 16.2237 12.7406 16.666 13.1365ZM5.83268 12.4999C4.74417 12.4999 3.81813 13.1956 3.47494 14.1666H3.33268V4.99992H11.666V14.1666H8.19043C7.84723 13.1956 6.9212 12.4999 5.83268 12.4999ZM5.83268 14.1666C5.37244 14.1666 4.99935 14.5397 4.99935 14.9999C4.99935 15.4602 5.37244 15.8333 5.83268 15.8333C6.29292 15.8333 6.66602 15.4602 6.66602 14.9999C6.66602 14.5397 6.29292 14.1666 5.83268 14.1666ZM14.166 14.9999C14.166 14.5397 14.5391 14.1666 14.9993 14.1666C15.4596 14.1666 15.8327 14.5397 15.8327 14.9999C15.8327 15.4602 15.4596 15.8333 14.9993 15.8333C14.5391 15.8333 14.166 15.4602 14.166 14.9999Z" fill="#187C18"/></svg>
-);
-const CloseIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M7.93141 7.05708L3.77252 2.86182L2.83789 3.80463L6.99678 7.99989L2.83789 12.1952L3.77252 13.138L7.93141 8.9427L12.0903 13.138L13.0249 12.1952L8.86605 7.99989L13.0249 3.80463L12.0903 2.86182L7.93141 7.05708Z" fill="#474747"/></svg>
-);
-const GiftIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M5.99668 2.78042C6.40905 2.57644 6.86897 2.48171 7.32887 2.50291C7.78879 2.52412 8.23792 2.66079 8.62896 2.90309C9.29346 3.31482 9.72671 3.90221 10 4.53197C10.2733 3.90221 10.7065 3.31482 11.371 2.90309C11.7621 2.66079 12.2112 2.52412 12.6711 2.50291C13.131 2.48171 13.5909 2.57644 14.0033 2.78042C14.416 2.98454 14.7695 3.29258 15.0211 3.6783C15.273 4.06461 15.4116 4.51249 15.4165 4.97432C15.4197 5.26938 15.3682 5.5599 15.267 5.83333H15.8333C16.7538 5.83333 17.5 6.57952 17.5 7.5V9.16667C17.5 9.78357 17.1648 10.3222 16.6667 10.6104V15.8333C16.6667 16.7538 15.9205 17.5 15 17.5H5C4.07953 17.5 3.33333 16.7538 3.33333 15.8333V10.6104C2.83517 10.3222 2.5 9.78357 2.5 9.16667V7.5C2.5 6.57952 3.24619 5.83333 4.16667 5.83333H4.73298C4.63179 5.5599 4.5803 5.26938 4.58347 4.97432C4.58844 4.51249 4.72704 4.06461 4.97895 3.6783C5.23048 3.29258 5.58404 2.98454 5.99668 2.78042ZM10.8333 7.5V9.16667H15.8333V7.5H10.8333ZM12.7986 5.83333C12.9702 5.83318 13.1366 5.79217 13.2815 5.71699C13.4347 5.63751 13.5544 5.52488 13.634 5.39713C13.7133 5.26996 13.7514 5.1303 13.75 4.99224C13.7485 4.85415 13.7073 4.71486 13.625 4.58868C13.5423 4.46191 13.4197 4.35115 13.2644 4.27432C13.1088 4.19735 12.93 4.15942 12.7479 4.16781C12.5658 4.17621 12.3934 4.23031 12.2489 4.31984C11.7616 4.62175 11.4631 5.18285 11.3306 5.83333H12.1871L12.2177 5.83234C12.2476 5.83147 12.2897 5.83046 12.3422 5.82975C12.4471 5.82835 12.5943 5.82817 12.7681 5.83293C12.7776 5.83319 12.7872 5.83332 12.7967 5.83333H12.7986ZM9.16667 7.5V9.16667H4.16667V7.5H9.16667ZM7.75112 4.31984C8.23838 4.62175 8.53693 5.18285 8.66935 5.83333H7.81285L7.78229 5.83234C7.75244 5.83147 7.71028 5.83046 7.65776 5.82975C7.55292 5.82835 7.40571 5.82817 7.2319 5.83293C7.22237 5.83319 7.21284 5.83332 7.20333 5.83333H7.20136C7.02981 5.83318 6.86337 5.79217 6.71849 5.71699C6.56531 5.63751 6.44556 5.52488 6.36596 5.39713C6.28674 5.26996 6.24856 5.1303 6.25004 4.99224C6.25153 4.85415 6.29273 4.71486 6.37501 4.58868C6.45768 4.46191 6.58031 4.35115 6.73564 4.27432C6.89123 4.19735 7.06999 4.15942 7.25211 4.16781C7.4342 4.17621 7.60663 4.23031 7.75112 4.31984ZM10.8333 10.8333H15V15.8333H10.8333V10.8333ZM9.16667 10.8333V15.8333H5V10.8333H9.16667Z" fill="#DC0069"/></svg>
-);
-const ChevronIcon = ({ open }) => (
-  <svg className={`gift__chev ${open ? "gift__chev--open" : ""}`} width="16" height="16" viewBox="0 0 16 16" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M3.63862 10.6891L8.00038 6.58232L12.362 10.6891L13.276 9.71837L8.0004 4.75098L2.72461 9.71835L3.63862 10.6891Z" fill="black"/></svg>
-);
-const InfoIcon = () => (
-  <svg className="service__info" width="14" height="14" viewBox="0 0 14 14" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M1.16602 7.00008C1.16602 3.77842 3.77769 1.16675 6.99935 1.16675C10.221 1.16675 12.8327 3.77842 12.8327 7.00008C12.8327 10.2217 10.221 12.8334 6.99935 12.8334C3.77769 12.8334 1.16602 10.2217 1.16602 7.00008ZM6.27018 4.81258C6.27018 4.40987 6.59664 4.08341 6.99935 4.08341C7.40206 4.08341 7.72852 4.40987 7.72852 4.81258C7.72852 5.21529 7.40206 5.54175 6.99935 5.54175C6.59664 5.54175 6.27018 5.21529 6.27018 4.81258ZM7.58268 6.41675V9.91675H6.41602V6.41675H7.58268Z" fill="#6B6B6B"/></svg>
-);
-const LoyaltyIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10.4375 18.3332C10.4375 18.3332 11.5521 15.8019 13.6773 13.6751C15.8026 11.5483 18.3322 10.4385 18.3322 10.4385C10.4594 10.4385 10.443 10.4603 10.443 18.3332H10.4375Z" fill="#DC0069"/><path d="M9.5625 18.3332C9.5625 18.3332 8.44795 15.8019 6.32265 13.6751C4.19736 11.5483 1.66776 10.4385 1.66776 10.4385C9.54065 10.4385 9.55704 10.4603 9.55704 18.3332H9.5625Z" fill="#DC0069"/><path d="M10.4375 1.6665C10.4375 1.6665 11.5521 4.19785 13.6773 6.32462C15.8026 8.45139 18.3322 9.56124 18.3322 9.56124C10.4594 9.56124 10.443 9.53937 10.443 1.6665H10.4375Z" fill="#DC0069"/><path d="M9.5625 1.6665C9.5625 1.6665 8.44795 4.19785 6.32265 6.32462C4.19736 8.45139 1.66776 9.56124 1.66776 9.56124C9.54065 9.56124 9.55704 9.53937 9.55704 1.6665H9.5625Z" fill="#DC0069"/></svg>
-);
-const Minus = () => (<svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/></svg>);
-const Plus = () => (<svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/></svg>);
-const Check = () => (<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-6" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>);
+const I = {
+  truck:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.33268 3.33325C2.41221 3.33325 1.66602 4.07944 1.66602 4.99992V14.1666C1.66602 15.0871 2.41221 15.8333 3.33268 15.8333H3.47494C3.81813 16.8042 4.74417 17.4999 5.83268 17.4999C6.9212 17.4999 7.84723 16.8042 8.19043 15.8333H12.6416C12.9848 16.8042 13.9108 17.4999 14.9993 17.4999C16.1525 17.4999 17.1233 16.7191 17.412 15.6574C17.9579 15.3837 18.3327 14.8189 18.3327 14.1666V11.078C18.3327 10.7584 18.2408 10.4456 18.068 10.1767L16.3035 7.43199C15.9968 6.95495 15.4686 6.66659 14.9015 6.66659H13.3327V3.33325H3.33268ZM16.666 13.1365V11.078L14.9015 8.33325H13.3327V13.1365C13.775 12.7406 14.3591 12.4999 14.9993 12.4999C15.6396 12.4999 16.2237 12.7406 16.666 13.1365ZM5.83268 12.4999C4.74417 12.4999 3.81813 13.1956 3.47494 14.1666H3.33268V4.99992H11.666V14.1666H8.19043C7.84723 13.1956 6.9212 12.4999 5.83268 12.4999ZM5.83268 14.1666C5.37244 14.1666 4.99935 14.5397 4.99935 14.9999C4.99935 15.4602 5.37244 15.8333 5.83268 15.8333C6.29292 15.8333 6.66602 15.4602 6.66602 14.9999C6.66602 14.5397 6.29292 14.1666 5.83268 14.1666ZM14.166 14.9999C14.166 14.5397 14.5391 14.1666 14.9993 14.1666C15.4596 14.1666 15.8327 14.5397 15.8327 14.9999C15.8327 15.4602 15.4596 15.8333 14.9993 15.8333C14.5391 15.8333 14.166 15.4602 14.166 14.9999Z" fill="#187C18"/></svg>',
+  close:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M7.93141 7.05708L3.77252 2.86182L2.83789 3.80463L6.99678 7.99989L2.83789 12.1952L3.77252 13.138L7.93141 8.9427L12.0903 13.138L13.0249 12.1952L8.86605 7.99989L13.0249 3.80463L12.0903 2.86182L7.93141 7.05708Z" fill="#474747"/></svg>',
+  gift:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.99668 2.78042C6.40905 2.57644 6.86897 2.48171 7.32887 2.50291C7.78879 2.52412 8.23792 2.66079 8.62896 2.90309C9.29346 3.31482 9.72671 3.90221 10 4.53197C10.2733 3.90221 10.7065 3.31482 11.371 2.90309C11.7621 2.66079 12.2112 2.52412 12.6711 2.50291C13.131 2.48171 13.5909 2.57644 14.0033 2.78042C14.416 2.98454 14.7695 3.29258 15.0211 3.6783C15.273 4.06461 15.4116 4.51249 15.4165 4.97432C15.4197 5.26938 15.3682 5.5599 15.267 5.83333H15.8333C16.7538 5.83333 17.5 6.57952 17.5 7.5V9.16667C17.5 9.78357 17.1648 10.3222 16.6667 10.6104V15.8333C16.6667 16.7538 15.9205 17.5 15 17.5H5C4.07953 17.5 3.33333 16.7538 3.33333 15.8333V10.6104C2.83517 10.3222 2.5 9.78357 2.5 9.16667V7.5C2.5 6.57952 3.24619 5.83333 4.16667 5.83333H4.73298C4.63179 5.5599 4.5803 5.26938 4.58347 4.97432C4.58844 4.51249 4.72704 4.06461 4.97895 3.6783C5.23048 3.29258 5.58404 2.98454 5.99668 2.78042ZM10.8333 7.5V9.16667H15.8333V7.5H10.8333ZM12.7986 5.83333C12.9702 5.83318 13.1366 5.79217 13.2815 5.71699C13.4347 5.63751 13.5544 5.52488 13.634 5.39713C13.7133 5.26996 13.7514 5.1303 13.75 4.99224C13.7485 4.85415 13.7073 4.71486 13.625 4.58868C13.5423 4.46191 13.4197 4.35115 13.2644 4.27432C13.1088 4.19735 12.93 4.15942 12.7479 4.16781C12.5658 4.17621 12.3934 4.23031 12.2489 4.31984C11.7616 4.62175 11.4631 5.18285 11.3306 5.83333H12.1871L12.2177 5.83234C12.2476 5.83147 12.2897 5.83046 12.3422 5.82975C12.4471 5.82835 12.5943 5.82817 12.7681 5.83293C12.7776 5.83319 12.7872 5.83332 12.7967 5.83333H12.7986ZM9.16667 7.5V9.16667H4.16667V7.5H9.16667ZM7.75112 4.31984C8.23838 4.62175 8.53693 5.18285 8.66935 5.83333H7.81285L7.78229 5.83234C7.75244 5.83147 7.71028 5.83046 7.65776 5.82975C7.55292 5.82835 7.40571 5.82817 7.2319 5.83293C7.22237 5.83319 7.21284 5.83332 7.20333 5.83333H7.20136C7.02981 5.83318 6.86337 5.79217 6.71849 5.71699C6.56531 5.63751 6.44556 5.52488 6.36596 5.39713C6.28674 5.26996 6.24856 5.1303 6.25004 4.99224C6.25153 4.85415 6.29273 4.71486 6.37501 4.58868C6.45768 4.46191 6.58031 4.35115 6.73564 4.27432C6.89123 4.19735 7.06999 4.15942 7.25211 4.16781C7.4342 4.17621 7.60663 4.23031 7.75112 4.31984ZM10.8333 10.8333H15V15.8333H10.8333V10.8333ZM9.16667 10.8333V15.8333H5V10.8333H9.16667Z" fill="#DC0069"/></svg>',
+  chevron:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.63862 10.6891L8.00038 6.58232L12.362 10.6891L13.276 9.71837L8.0004 4.75098L2.72461 9.71835L3.63862 10.6891Z" fill="black"/></svg>',
+  info:'<svg class="service__info" width="14" height="14" viewBox="0 0 14 14" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.16602 7.00008C1.16602 3.77842 3.77769 1.16675 6.99935 1.16675C10.221 1.16675 12.8327 3.77842 12.8327 7.00008C12.8327 10.2217 10.221 12.8334 6.99935 12.8334C3.77769 12.8334 1.16602 10.2217 1.16602 7.00008ZM6.27018 4.81258C6.27018 4.40987 6.59664 4.08341 6.99935 4.08341C7.40206 4.08341 7.72852 4.40987 7.72852 4.81258C7.72852 5.21529 7.40206 5.54175 6.99935 5.54175C6.59664 5.54175 6.27018 5.21529 6.27018 4.81258ZM7.58268 6.41675V9.91675H6.41602V6.41675H7.58268Z" fill="#6B6B6B"/></svg>',
+  loyalty:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10.4375 18.3332C10.4375 18.3332 11.5521 15.8019 13.6773 13.6751C15.8026 11.5483 18.3322 10.4385 18.3322 10.4385C10.4594 10.4385 10.443 10.4603 10.443 18.3332H10.4375Z" fill="#DC0069"/><path d="M9.5625 18.3332C9.5625 18.3332 8.44795 15.8019 6.32265 13.6751C4.19736 11.5483 1.66776 10.4385 1.66776 10.4385C9.54065 10.4385 9.55704 10.4603 9.55704 18.3332H9.5625Z" fill="#DC0069"/><path d="M10.4375 1.6665C10.4375 1.6665 11.5521 4.19785 13.6773 6.32462C15.8026 8.45139 18.3322 9.56124 18.3322 9.56124C10.4594 9.56124 10.443 9.53937 10.443 1.6665H10.4375Z" fill="#DC0069"/><path d="M9.5625 1.6665C9.5625 1.6665 8.44795 4.19785 6.32265 6.32462C4.19736 8.45139 1.66776 9.56124 1.66776 9.56124C9.54065 9.56124 9.55704 9.53937 9.55704 1.6665H9.5625Z" fill="#DC0069"/></svg>',
+  minus:'<svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  plus:'<svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  check:'<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
 
-/* ---------- components ---------- */
-function Stepper({ value, onChange }) {
-  return (
-    <div className="stepper">
-      <button className="stepper__btn" disabled={value <= 1} onClick={() => onChange(value - 1)}><Minus /></button>
-      <span className="stepper__count t-label-500">{value}</span>
-      <button className="stepper__btn stepper__btn--plus" onClick={() => onChange(value + 1)}><Plus /></button>
-    </div>
-  );
-}
-
-function ProductCard({ item, onQty, onRemove }) {
-  const lineTotal = item.unitPrice * item.qty;
-  return (
-    <div className="product">
-      <div className="product__img" style={{ background: item.image }} />
-      <div className="product__body">
-        <div className="product__text">
-          <span className="product__name t-label-400">{item.brand} <b>{item.name}</b></span>
-          <span className="product__sub t-body">{item.subtitle}</span>
-        </div>
-        <div className="product__controls">
-          {item.isGift
-            ? <span className="t-label-500" style={{ paddingLeft: 8 }}>{item.qty}</span>
-            : <Stepper value={item.qty} onChange={(q) => onQty(item.id, q)} />}
-          <span className="product__price t-label-700">{item.isGift ? "zdarma" : kc(lineTotal)}</span>
-        </div>
-      </div>
-      <button className="product__remove" onClick={() => onRemove(item.id)}><CloseIcon /></button>
-    </div>
-  );
-}
-
-function GiftAccordion({ open, onToggle, options, selected, onSelect }) {
-  return (
-    <div className="gift">
-      <div className="gift__head" onClick={onToggle}>
-        <GiftIcon />
-        <span className="gift__head-title t-label-500"><b>Zvolit k nákupu dárek zdarma</b></span>
-        <ChevronIcon open={open} />
-      </div>
-      {open && (
-        <div className="gift__list">
-          <span className="gift__sub t-label-500">Vyberte si váš dárek</span>
-          {options.map((g) => (
-            <div key={g.id} className={`gift-option ${selected === g.id ? "gift-option--sel" : ""}`} onClick={() => onSelect(g.id)}>
-              <div className="radio">{selected === g.id && <div className="radio__dot" />}</div>
-              <div className="gift-option__img" style={{ background: g.image }} />
-              <div className="gift-option__text">
-                <span className="gift-option__title t-label-400">{g.brand} <b>{g.name}</b></span>
-                <span className="gift-option__desc t-label-sm">{g.desc}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ServiceRow({ svc, onToggle }) {
-  return (
-    <div className="service">
-      <div className="service__row" onClick={() => onToggle(svc.key)}>
-        <div className={`checkbox ${svc.checked ? "checkbox--on" : ""}`}>{svc.checked && <Check />}</div>
-        <span className="service__title t-label-500">{svc.title}</span>
-        {svc.hasInfo && <InfoIcon />}
-        <span className="service__price t-label-500">{kc(svc.price)}</span>
-      </div>
-      <p className="service__desc t-label-400">{svc.desc}</p>
-    </div>
-  );
-}
-
-/* ---------- root ---------- */
-function NotinoCart() {
-  const [items, setItems] = useState([
-    { id: 1, brand: "Hugo Boss", name: "Boss Bottled", subtitle: "parfémová voda pro muže 50 ml", unitPrice: 1106, qty: 1, image: "#d9c7b0" },
-    { id: 2, brand: "Burberry", name: "Mr. Burberry", subtitle: "parfémová voda pro muže 30 ml", unitPrice: 1306, qty: 1, image: "#2b2b33" },
-    { id: 3, brand: "Burberry", name: "Multiline", subtitle: "hrací karty", unitPrice: 0, qty: 1, image: "#8f1d1d", isGift: true },
-  ]);
-  const [giftOpen, setGiftOpen] = useState(true);
-  const [selectedGift, setSelectedGift] = useState(null);
-  const giftOptions = [1, 2, 3, 4].map((i) => ({ id: i, brand: "Armani", name: "Code", desc: "sprchový gel pro muže 75 ml", image: "#1c1c1c" }));
-  const [services, setServices] = useState([
-    { key: "wrap", title: "Zabalit jako dárek", price: 120, checked: false, hasInfo: true, desc: "Rádi vám vše zabalíme do luxusního dárkového balení. Více informací" },
-    { key: "eco", title: "Zabalit ekologicky", price: 25, checked: false, hasInfo: true, desc: "Pomozte nám šetřit životní prostředí a využijte balení z recyklovaného materiálu bez plastu. Tato služba není dostupná při doručení do obchodů Notino a jejich výdejních míst." },
-    { key: "insure", title: "Pojistit zásilku", price: 20, checked: false, hasInfo: false, desc: "V případě poškození či ztráty zásilky nečekáte na vyřešení situace v zákonné lhůtě. Stačí nám ztracenou nebo poškozenou zásilku nahlásit a zdokumentovat, a my Vám obratem pošleme úplně nové zboží." },
-  ]);
-  const [voucherInput, setVoucherInput] = useState("");
-  const [voucher, setVoucher] = useState(null);
-  const [voucherErr, setVoucherErr] = useState(false);
-
-  /* ---- derived state (single recalc source) ---- */
-  const itemsSubtotal = useMemo(() => items.filter((i) => !i.isGift).reduce((s, i) => s + i.unitPrice * i.qty, 0), [items]);
-  const servicesTotal = useMemo(() => services.filter((s) => s.checked).reduce((s, x) => s + x.price, 0), [services]);
-  const discount = useMemo(() => (voucher?.type === "pct" ? Math.round(itemsSubtotal * voucher.value) : 0), [voucher, itemsSubtotal]);
+/* ---------- derived ---------- */
+function derive(){
+  const itemsSubtotal = state.items.filter(i=>!i.isGift).reduce((s,i)=>s+i.unitPrice*i.qty,0);
+  const servicesTotal = state.services.filter(s=>s.checked).reduce((s,x)=>s+x.price,0);
+  const discount = state.voucher && state.voucher.type==="pct" ? Math.round(itemsSubtotal*state.voucher.value) : 0;
   const total = Math.max(0, itemsSubtotal + servicesTotal - discount);
-  const points = Math.round(total * POINTS_PER_KC);
-  const deliveryProgress = Math.min(100, (itemsSubtotal / FREE_DELIVERY_THRESHOLD) * 100);
+  const points = Math.round(total*POINTS_PER_KC);
+  const deliveryProgress = Math.min(100, itemsSubtotal/FREE_DELIVERY_THRESHOLD*100);
   const freeDelivery = itemsSubtotal >= FREE_DELIVERY_THRESHOLD;
-
-  /* ---- handlers ---- */
-  const setQty = (id, q) => setItems((prev) => prev.map((i) => (i.id === id ? { ...i, qty: Math.max(1, q) } : i)));
-  const removeItem = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
-  const toggleService = (key) => setServices((prev) => prev.map((s) => (s.key === key ? { ...s, checked: !s.checked } : s)));
-  const applyVoucher = () => {
-    const code = voucherInput.trim().toUpperCase();
-    if (VOUCHERS[code]) { setVoucher(VOUCHERS[code]); setVoucherErr(false); }
-    else { setVoucher(null); setVoucherErr(true); }
-  };
-
-  return (
-    <div className="ncart">
-      <style>{CSS}</style>
-      <main className="main">
-        <h1 className="page-title t-title-lg">Nákupní košík</h1>
-
-        <div className="free-delivery">
-          <div className="free-delivery__row" style={{ color: freeDelivery ? "var(--color-text-positive)" : "var(--color-text-secondary)" }}>
-            <TruckIcon />
-            <span className="t-label-lg-500">{freeDelivery ? "Doprava zdarma na vybrané způsoby dopravy" : `Do dopravy zdarma zbývá ${kc(FREE_DELIVERY_THRESHOLD - itemsSubtotal)}`}</span>
-          </div>
-          <div className="free-delivery__track"><div className="free-delivery__bar" style={{ width: `${deliveryProgress}%` }} /></div>
-        </div>
-
-        <div className="col">
-          {items.map((item) => <ProductCard key={item.id} item={item} onQty={setQty} onRemove={removeItem} />)}
-
-          <GiftAccordion open={giftOpen} onToggle={() => setGiftOpen((o) => !o)} options={giftOptions} selected={selectedGift} onSelect={setSelectedGift} />
-
-          <div className="services">
-            {services.map((s) => <ServiceRow key={s.key} svc={s} onToggle={toggleService} />)}
-          </div>
-
-          <div className="disc-line t-label-500">
-            <span>Sleva na dopravu 100 %</span>
-          </div>
-
-          <div className="voucher">
-            <span className="voucher__title t-label-500">Kód dárkového poukazu nebo slevy</span>
-            <div className={`voucher__box ${voucherErr ? "voucher__box--err" : ""}`}>
-              <input className="voucher__input" placeholder="Zadejte váš slevový kód" value={voucherInput}
-                onChange={(e) => { setVoucherInput(e.target.value); setVoucherErr(false); }}
-                onKeyDown={(e) => e.key === "Enter" && applyVoucher()} />
-              <button className="voucher__apply t-label-500" onClick={applyVoucher}>Použít</button>
-            </div>
-            {voucher && <span className="voucher__msg t-label-sm">Kód {voucher.label} použit — sleva {kc(discount)}</span>}
-            {voucherErr && <span className="voucher__msg t-label-sm">Neplatný kód. Zkuste NOTINO10.</span>}
-          </div>
-
-          <div className="club">
-            <span className="club__title t-label-500">Notino Club</span>
-            <div className="club__banner">
-              <LoyaltyIcon />
-              <span className="club__banner-text t-label-400">Z této objednávky získáte <b>{fmt(points)} bodů</b>!</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="total">
-          <span className="total__label t-label-lg-400">Celková cena včetně DPH</span>
-          <span className="total__amount t-title-lg">{kc(total)}</span>
-        </div>
-      </main>
-
-      <div className="cta">
-        <button className="btn btn--primary">K pokladně</button>
-        <button className="btn btn--secondary">Zpět do obchodu</button>
-      </div>
-    </div>
-  );
+  return { itemsSubtotal, servicesTotal, discount, total, points, deliveryProgress, freeDelivery };
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<NotinoCart />);
+/* ---------- render ---------- */
+function render(){
+  const d = derive();
+  const app = document.getElementById("app");
+  app.innerHTML = `
+  <main class="main">
+    <h1 class="page-title t-title-lg">Nákupní košík</h1>
+
+    <div class="free-delivery">
+      <div class="free-delivery__row" style="color:${d.freeDelivery?'var(--color-text-positive)':'var(--color-text-secondary)'}">
+        ${I.truck}<span class="t-label-lg-500">${d.freeDelivery?'Doprava zdarma na vybrané způsoby dopravy':'Do dopravy zdarma zbývá '+kc(FREE_DELIVERY_THRESHOLD-d.itemsSubtotal)}</span>
+      </div>
+      <div class="free-delivery__track"><div class="free-delivery__bar" style="width:${d.deliveryProgress}%"></div></div>
+    </div>
+
+    <div class="col">
+      ${state.items.map(item => `
+        <div class="product">
+          <div class="product__img" style="background:${item.image}"></div>
+          <div class="product__body">
+            <div class="product__text">
+              <span class="product__name t-label-400">${esc(item.brand)} <b>${esc(item.name)}</b></span>
+              <span class="product__sub t-body">${esc(item.subtitle)}</span>
+            </div>
+            <div class="product__controls">
+              ${item.isGift
+                ? `<span class="t-label-500" style="padding-left:8px">${item.qty}</span>`
+                : `<div class="stepper">
+                     <button class="stepper__btn" data-act="dec" data-id="${item.id}" ${item.qty<=1?'disabled':''}>${I.minus}</button>
+                     <span class="stepper__count t-label-500">${item.qty}</span>
+                     <button class="stepper__btn stepper__btn--plus" data-act="inc" data-id="${item.id}">${I.plus}</button>
+                   </div>`}
+              <span class="product__price t-label-700">${item.isGift?'zdarma':kc(item.unitPrice*item.qty)}</span>
+            </div>
+          </div>
+          <button class="product__remove" data-act="remove" data-id="${item.id}">${I.close}</button>
+        </div>`).join("")}
+
+      <div class="gift">
+        <div class="gift__head" data-act="toggleGift">
+          ${I.gift}
+          <span class="gift__head-title t-label-500"><b>Zvolit k nákupu dárek zdarma</b></span>
+          <span class="gift__chev ${state.giftOpen?'gift__chev--open':''}">${I.chevron}</span>
+        </div>
+        ${state.giftOpen ? `
+          <div class="gift__list">
+            <span class="gift__sub t-label-500">Vyberte si váš dárek</span>
+            ${state.giftOptions.map(g => `
+              <div class="gift-option ${state.selectedGift===g.id?'gift-option--sel':''}" data-act="selectGift" data-id="${g.id}">
+                <div class="radio">${state.selectedGift===g.id?'<div class="radio__dot"></div>':''}</div>
+                <div class="gift-option__img" style="background:${g.image}"></div>
+                <div class="gift-option__text">
+                  <span class="gift-option__title t-label-400">${g.brand} <b>${g.name}</b></span>
+                  <span class="gift-option__desc t-label-sm">${g.desc}</span>
+                </div>
+              </div>`).join("")}
+          </div>` : ""}
+      </div>
+
+      <div class="services">
+        ${state.services.map(s => `
+          <div class="service">
+            <div class="service__row" data-act="toggleService" data-key="${s.key}">
+              <div class="checkbox ${s.checked?'checkbox--on':''}">${s.checked?I.check:''}</div>
+              <span class="service__title t-label-500">${s.title}</span>
+              ${s.hasInfo?I.info:''}
+              <span class="service__price t-label-500">${kc(s.price)}</span>
+            </div>
+            <p class="service__desc t-label-400">${s.desc}</p>
+          </div>`).join("")}
+      </div>
+
+      <div class="disc-line t-label-500"><span>Sleva na dopravu 100 %</span></div>
+
+      <div class="voucher">
+        <span class="voucher__title t-label-500">Kód dárkového poukazu nebo slevy</span>
+        <div class="voucher__box ${state.voucherErr?'voucher__box--err':''}">
+          <input class="voucher__input" id="voucherInput" placeholder="Zadejte váš slevový kód" value="${esc(state.voucherInput)}">
+          <button class="voucher__apply t-label-500" data-act="applyVoucher">Použít</button>
+        </div>
+        ${state.voucher?`<span class="voucher__msg t-label-sm">Kód ${state.voucher.label} použit — sleva ${kc(d.discount)}</span>`:''}
+        ${state.voucherErr?'<span class="voucher__msg t-label-sm">Neplatný kód. Zkuste NOTINO10.</span>':''}
+      </div>
+
+      <div class="club">
+        <span class="club__title t-label-500">Notino Club</span>
+        <div class="club__banner">
+          ${I.loyalty}
+          <span class="club__banner-text t-label-400">Z této objednávky získáte <b>${fmt(d.points)} bodů</b>!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="total">
+      <span class="total__label t-label-lg-400">Celková cena včetně DPH</span>
+      <span class="total__amount t-title-lg">${kc(d.total)}</span>
+    </div>
+  </main>
+
+  <div class="cta">
+    <button class="btn btn--primary">K pokladně</button>
+    <button class="btn btn--secondary">Zpět do obchodu</button>
+  </div>`;
+
+  // keep voucher input focus/caret after re-render if user was typing
+  const vi = document.getElementById("voucherInput");
+  if (vi && state._focusVoucher){ vi.focus(); vi.setSelectionRange(vi.value.length, vi.value.length); }
+}
+
+/* ---------- events (delegation) ---------- */
+document.getElementById("app").addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  const act = el.dataset.act;
+  const id = el.dataset.id ? Number(el.dataset.id) : null;
+  state._focusVoucher = false;
+  if (act==="inc"){ const it=state.items.find(i=>i.id===id); it.qty++; }
+  else if (act==="dec"){ const it=state.items.find(i=>i.id===id); it.qty=Math.max(1,it.qty-1); }
+  else if (act==="remove"){ state.items=state.items.filter(i=>i.id!==id); }
+  else if (act==="toggleGift"){ state.giftOpen=!state.giftOpen; }
+  else if (act==="selectGift"){ state.selectedGift=id; }
+  else if (act==="toggleService"){ const s=state.services.find(x=>x.key===el.dataset.key); s.checked=!s.checked; }
+  else if (act==="applyVoucher"){
+    const code=(state.voucherInput||"").trim().toUpperCase();
+    if (VOUCHERS[code]){ state.voucher=VOUCHERS[code]; state.voucherErr=false; }
+    else { state.voucher=null; state.voucherErr=true; }
+  } else return;
+  render();
+});
+
+// track voucher input without full re-render on each keystroke
+document.getElementById("app").addEventListener("input", e => {
+  if (e.target.id==="voucherInput"){ state.voucherInput=e.target.value; state.voucherErr=false; }
+});
+document.getElementById("app").addEventListener("keydown", e => {
+  if (e.target.id==="voucherInput" && e.key==="Enter"){
+    const code=(state.voucherInput||"").trim().toUpperCase();
+    state._focusVoucher=true;
+    if (VOUCHERS[code]){ state.voucher=VOUCHERS[code]; state.voucherErr=false; }
+    else { state.voucher=null; state.voucherErr=true; }
+    render();
+  }
+});
+
+render();
 </script>
 </body>
 </html>
