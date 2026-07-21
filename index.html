@@ -3,55 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notino Cart — Prototypes</title>
+<title>Notino Cart — Prototype Library</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --pink:#DC0069; --ink:#000; --sub:#474747; --line:#E1E1E1; --bg:#F7F7F7; }
+  :root{ --pink:#DC0069; --ink:#000; --sub:#474747; --tert:#6B6B6B; --line:#E1E1E1; --bg:#F7F7F7; }
   *{box-sizing:border-box;}
   body{margin:0;font-family:Roboto,Arial,sans-serif;color:var(--ink);background:#fff;}
-  header{padding:48px 24px 24px;max-width:900px;margin:0 auto;}
-  h1{font-size:32px;font-weight:500;margin:0 0 8px;}
-  .sub{color:var(--sub);font-size:16px;line-height:24px;margin:0;}
-  .grid{max-width:900px;margin:24px auto 64px;padding:0 24px;display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
-  .card{border:1px solid var(--line);border-radius:4px;padding:20px;text-decoration:none;
-    color:inherit;display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s ease,transform .15s ease;}
-  .card:hover{box-shadow:0 6px 24px rgba(0,0,0,.10);transform:translateY(-2px);}
-  .card__tag{font-size:12px;font-weight:500;color:var(--pink);text-transform:uppercase;letter-spacing:.04em;}
-  .card__title{font-size:18px;font-weight:500;}
-  .card__desc{font-size:14px;line-height:20px;color:var(--sub);}
-  .card__link{font-size:14px;font-weight:500;margin-top:4px;}
-  footer{max-width:900px;margin:0 auto;padding:24px;border-top:1px solid var(--line);
-    color:var(--sub);font-size:13px;line-height:20px;}
+  .wrap{max-width:760px;margin:0 auto;padding:48px 24px 64px;}
+  h1{font-size:28px;font-weight:500;margin:0 0 6px;}
+  .sub{color:var(--sub);font-size:15px;line-height:22px;margin:0 0 40px;}
+
+  .project{margin-bottom:32px;}
+  .project__head{display:flex;align-items:baseline;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:4px;}
+  .project__name{font-size:17px;font-weight:500;}
+  .project__count{font-size:13px;color:var(--tert);}
+
+  ul.tree{list-style:none;margin:0;padding:0;}
+  ul.tree li{border-left:1px solid var(--line);}
+  ul.tree li a{
+    display:flex;align-items:center;gap:10px;padding:12px 16px 12px 20px;
+    text-decoration:none;color:var(--ink);position:relative;
+  }
+  ul.tree li a::before{
+    content:"";position:absolute;left:-1px;top:50%;width:14px;height:1px;background:var(--line);
+  }
+  ul.tree li a:hover{background:var(--bg);}
+  .file-tag{font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+    padding:2px 6px;border-radius:2px;flex-shrink:0;}
+  .file-tag--interactive{background:var(--pink);color:#fff;}
+  .file-tag--static{background:var(--bg);color:var(--tert);border:1px solid var(--line);}
+  .file-label{font-size:14px;font-weight:500;}
+  .file-desc{font-size:13px;color:var(--tert);margin-left:auto;text-align:right;padding-left:12px;}
+
+  footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--tert);font-size:13px;line-height:20px;}
+  footer code{background:var(--bg);padding:1px 5px;border-radius:2px;}
 </style>
 </head>
 <body>
-  <header>
-    <h1>Notino Cart — Prototypes</h1>
-    <p class="sub">Living gallery of cart design prototypes. Each link opens a working prototype.</p>
-  </header>
+<div class="wrap">
+  <h1>Notino Cart — Prototype Library</h1>
+  <p class="sub">One folder per project. Every entry below opens a working prototype.</p>
 
-  <main class="grid">
-    <a class="card" href="./cart-interactive.html">
-      <span class="card__tag">Interactive</span>
-      <span class="card__title">Cart — interactive reference</span>
-      <span class="card__desc">Full recalc: steppers, services, voucher (try NOTINO10), gift selection, live total, points &amp; free-delivery bar.</span>
-      <span class="card__link">Open →</span>
-    </a>
+  <!-- PROJECT: cart-mvp -->
+  <div class="project">
+    <div class="project__head">
+      <span class="project__name">cart-mvp</span>
+      <span class="project__count">baseline cart screen</span>
+    </div>
+    <ul class="tree">
+      <li>
+        <a href="./cart-mvp/cart-interactive.html">
+          <span class="file-tag file-tag--interactive">Interactive</span>
+          <span class="file-label">cart-interactive.html</span>
+          <span class="file-desc">Steppers, services, voucher (NOTINO10), gift select, live total &amp; points</span>
+        </a>
+      </li>
+      <li>
+        <a href="./cart-mvp/cart-reference.html">
+          <span class="file-tag file-tag--static">Static</span>
+          <span class="file-label">cart-reference.html</span>
+          <span class="file-desc">Pixel reference — source of truth for tokens &amp; layout</span>
+        </a>
+      </li>
+    </ul>
+  </div>
 
-    <a class="card" href="./cart-reference.html">
-      <span class="card__tag">Static</span>
-      <span class="card__title">Cart — static reference</span>
-      <span class="card__desc">Pixel reference of the baseline cart screen. Source of truth for tokens and layout.</span>
-      <span class="card__link">Open →</span>
-    </a>
-
-    <!-- Add new prototypes by copying a card block above and pointing href to the new file. -->
-  </main>
+  <!-- Add new projects below by copying a .project block and pointing hrefs
+       at the new folder. See README.md for the full workflow. -->
 
   <footer>
-    Add a prototype: drop its HTML file into this repository, then copy one card block in
-    index.html and point <code>href</code> at the new file. Commit — the gallery updates automatically.
+    Add a project: create a folder at the repo root, drop its HTML file(s) in,
+    then copy one <code>.project</code> block above and point the links at the
+    new folder. See <a href="./README.md">README.md</a> for details.
   </footer>
+</div>
 </body>
 </html>
