@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notino – Nákupní košík (reference)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* ---- Color tokens (from Figma CSS) ---- */
+  --color-text-primary:#000;
+  --color-text-secondary:#474747;
+  --color-text-tertiary:#6B6B6B;
+  --color-text-disabled:#ABABAB;
+  --color-text-positive:#187C18;
+  --color-text-accent:#DC0069;
+
+  --color-background-primary:#FFF;
+  --color-background-secondary:#F7F7F7;
+  --color-background-disabled:#F7F7F7;
+  --color-background-inverse:#000;
+  --color-background-accent-subtle:#FBF0F5;
+  --color-loyalty-light-blue:#F0F2F8;
+
+  --color-border-divider:#E1E1E1;
+  --color-border-default:#ABABAB;
+  --color-border-positive:#187C18;
+
+  /* ---- Radius tokens ---- */
+  --radius-sm:2px;   /* buttons, inputs, checkbox */
+  --radius-pill:40px;/* stepper controls */
+
+  /* ---- Spacing scale ---- */
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-8:32px;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:#e9e9ec;
+  font-family:Roboto, Arial, Helvetica, sans-serif;
+  display:flex;
+  justify-content:center;
+  padding:24px 0;
+}
+
+/* ---- Type styles ---- */
+.t-title-lg{font-size:24px;font-weight:500;line-height:32px;}
+.t-label-lg-500{font-size:16px;font-weight:500;line-height:20px;}
+.t-label-lg-400{font-size:16px;font-weight:400;line-height:20px;}
+.t-body{font-size:14px;font-weight:400;line-height:24px;}
+.t-label-400{font-size:14px;font-weight:400;line-height:20px;}
+.t-label-500{font-size:14px;font-weight:500;line-height:20px;}
+.t-label-700{font-size:14px;font-weight:700;line-height:20px;}
+.t-label-sm{font-size:12px;font-weight:400;line-height:16px;}
+
+.frame{
+  width:375px;
+  background:var(--color-background-primary);
+  min-height:100vh;
+  box-shadow:0 8px 40px rgba(0,0,0,.15);
+  display:flex;
+  flex-direction:column;
+}
+
+/* ---------- HEADER ---------- */
+.header{background:#000;color:#fff;padding:12px 16px 12px;display:flex;flex-direction:column;gap:12px;}
+.header__row{display:flex;align-items:center;justify-content:space-between;}
+.header__left{display:flex;align-items:center;gap:16px;}
+.header__logo{font-size:22px;font-weight:700;letter-spacing:1px;}
+.header__icons{display:flex;align-items:center;gap:20px;}
+.header__icons svg{display:block;}
+.search{display:flex;align-items:center;background:#fff;border-radius:var(--radius-sm);padding:10px 14px;gap:8px;}
+.search input{border:0;outline:0;flex:1;font-family:inherit;font-size:14px;color:var(--color-text-tertiary);}
+.search input::placeholder{color:var(--color-text-tertiary);}
+
+/* ---------- MAIN ---------- */
+.main{display:flex;flex-direction:column;align-items:center;gap:16px;padding:0;}
+.page-title{color:var(--color-text-primary);text-align:center;padding:16px 0;margin:0;}
+
+/* ---------- FREE DELIVERY ---------- */
+.free-delivery{display:flex;flex-direction:column;align-items:center;gap:8px;align-self:stretch;padding:0 16px;}
+.free-delivery__row{display:flex;align-items:center;gap:8px;color:var(--color-text-positive);}
+.free-delivery__bar{height:6px;align-self:stretch;background:var(--color-border-positive);width:100%;}
+
+/* ---------- SECTION WRAP (keeps 343 content col) ---------- */
+.col{width:343px;max-width:343px;}
+
+/* ---------- PRODUCT CARD ---------- */
+.product{position:relative;display:flex;gap:16px;padding:16px 0;border-top:1px solid var(--color-border-divider);background:var(--color-background-primary);}
+.product__img{width:64px;height:64px;flex-shrink:0;background:#f0f0f0;background-size:cover;background-position:center;}
+.product__body{display:flex;flex-direction:column;gap:16px;flex:1;min-width:160px;}
+.product__text{display:flex;flex-direction:column;gap:4px;padding-right:24px;}
+.product__name{color:var(--color-text-primary);}
+.product__name b{font-weight:700;}
+.product__sub{color:var(--color-text-secondary);}
+.product__controls{display:flex;align-items:center;justify-content:space-between;}
+.product__remove{position:absolute;top:16px;right:0;width:16px;height:16px;cursor:pointer;background:none;border:0;padding:0;}
+.product__price{color:var(--color-text-primary);text-align:right;}
+
+/* stepper */
+.stepper{display:flex;align-items:center;}
+.stepper__btn{display:flex;width:32px;height:32px;padding:8px;justify-content:center;align-items:center;flex-shrink:0;border-radius:var(--radius-pill);background:var(--color-background-disabled);border:0;cursor:pointer;}
+.stepper__count{display:flex;width:24px;justify-content:center;align-items:center;color:var(--color-text-primary);text-align:center;}
+.static-count{width:100%;text-align:center;color:var(--color-text-primary);}
+
+/* ---------- GIFT ACCORDION ---------- */
+.gift{display:flex;flex-direction:column;gap:32px;padding:16px 0;border-top:1px solid var(--color-border-divider);}
+.gift__head{display:flex;align-items:center;gap:8px;}
+.gift__head-title{color:var(--color-text-primary);flex:1;}
+.gift__head-title b{font-weight:500;}
+.gift__list{display:flex;flex-direction:column;gap:8px;align-self:stretch;}
+.gift__sub{color:var(--color-text-secondary);align-self:flex-start;}
+.gift-option{display:flex;max-width:380px;padding:10px 15px;align-items:center;gap:20px;align-self:stretch;}
+.radio{width:20px;height:20px;border-radius:50%;border:1px solid var(--color-border-default);flex-shrink:0;}
+.gift-option__img{width:50px;height:50px;background:#e9e9e9;background-size:cover;flex-shrink:0;}
+.gift-option__text{display:flex;flex-direction:column;gap:2px;}
+.gift-option__title{color:var(--color-text-primary);}
+.gift-option__title b{font-weight:500;}
+.gift-option__desc{color:var(--color-text-secondary);}
+
+/* ---------- SERVICES ---------- */
+.services{display:flex;flex-direction:column;align-items:stretch;}
+.service{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-top:1px solid var(--color-border-divider);}
+.service__row{display:flex;align-items:center;gap:8px;}
+.checkbox{width:16px;height:16px;padding:2px;border-radius:2px;border:1px solid var(--color-border-default);background:var(--color-background-primary);flex-shrink:0;}
+.service__title{color:var(--color-text-primary);}
+.service__info{width:14px;height:14px;flex-shrink:0;}
+.service__price{margin-left:auto;color:var(--color-text-disabled);}
+.service__desc{color:var(--color-text-tertiary);padding-left:24px;}
+
+/* ---------- DISCOUNT LINE ---------- */
+.disc-line{padding:16px 0;border-top:1px solid var(--color-border-divider);color:var(--color-text-primary);}
+
+/* ---------- VOUCHER ---------- */
+.voucher{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-top:1px solid var(--color-border-divider);}
+.voucher__title{color:var(--color-text-primary);}
+.voucher__box{display:flex;align-items:center;align-self:stretch;border:1px solid var(--color-border-default);border-radius:var(--radius-sm);}
+.voucher__input{flex:1;padding:12px 16px;border:0;outline:0;font-family:inherit;font-size:14px;line-height:20px;color:var(--color-text-tertiary);}
+.voucher__input::placeholder{color:var(--color-text-tertiary);}
+.voucher__apply{display:flex;width:72px;padding:8px 16px;justify-content:center;align-items:center;color:var(--color-text-primary);background:none;border:0;cursor:pointer;}
+
+/* ---------- NOTINO CLUB ---------- */
+.club{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-top:1px solid var(--color-border-divider);}
+.club__title{color:var(--color-text-primary);}
+.club__banner{display:flex;align-items:center;gap:8px;background:var(--color-loyalty-light-blue);border-radius:4px;padding:12px 16px;}
+.club__banner-text{color:var(--color-text-secondary);}
+.club__banner-text b{font-weight:700;color:var(--color-text-primary);}
+
+/* ---------- TOTAL PRICE ---------- */
+.total{display:flex;width:100%;padding:14px 16px;justify-content:space-between;align-items:center;background:var(--color-background-secondary);margin-top:8px;}
+.total__label{color:var(--color-text-primary);}
+.total__amount{color:var(--color-text-primary);text-align:center;}
+
+/* ---------- FOOTER BUTTONS ---------- */
+.cta{display:flex;flex-direction:column;gap:12px;padding:16px;}
+.btn{display:flex;padding:12px 24px;justify-content:center;align-items:center;gap:8px;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;line-height:20px;}
+.btn--primary{background:var(--color-background-inverse);color:#fff;border:0;}
+.btn--secondary{background:var(--color-background-primary);color:var(--color-text-primary);border:1px solid var(--color-border-default);}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header__row">
+      <div class="header__left">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="header__logo">NOTINO</span>
+      </div>
+      <div class="header__icons">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#fff" stroke-width="1.8"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.5-7-9.5C5 7 7 5.5 9 5.5c1.5 0 2.5.8 3 2 .5-1.2 1.5-2 3-2 2 0 4 1.5 4 5 0 5-7 9.5-7 9.5z" stroke="#fff" stroke-width="1.6"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12H7L6 8z" stroke="#fff" stroke-width="1.6"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#fff" stroke-width="1.6"/></svg>
+      </div>
+    </div>
+    <div class="search">
+      <input placeholder="Hledej parfém, kosmetiku, značku…">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#000" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="#000" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- TITLE -->
+    <h1 class="page-title t-title-lg">Nákupní košík</h1>
+
+    <!-- FREE DELIVERY -->
+    <div class="free-delivery">
+      <div class="free-delivery__row">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.33268 3.33325C2.41221 3.33325 1.66602 4.07944 1.66602 4.99992V14.1666C1.66602 15.0871 2.41221 15.8333 3.33268 15.8333H3.47494C3.81813 16.8042 4.74417 17.4999 5.83268 17.4999C6.9212 17.4999 7.84723 16.8042 8.19043 15.8333H12.6416C12.9848 16.8042 13.9108 17.4999 14.9993 17.4999C16.1525 17.4999 17.1233 16.7191 17.412 15.6574C17.9579 15.3837 18.3327 14.8189 18.3327 14.1666V11.078C18.3327 10.7584 18.2408 10.4456 18.068 10.1767L16.3035 7.43199C15.9968 6.95495 15.4686 6.66659 14.9015 6.66659H13.3327V3.33325H3.33268ZM16.666 13.1365V11.078L14.9015 8.33325H13.3327V13.1365C13.775 12.7406 14.3591 12.4999 14.9993 12.4999C15.6396 12.4999 16.2237 12.7406 16.666 13.1365ZM5.83268 12.4999C4.74417 12.4999 3.81813 13.1956 3.47494 14.1666H3.33268V4.99992H11.666V14.1666H8.19043C7.84723 13.1956 6.9212 12.4999 5.83268 12.4999ZM5.83268 14.1666C5.37244 14.1666 4.99935 14.5397 4.99935 14.9999C4.99935 15.4602 5.37244 15.8333 5.83268 15.8333C6.29292 15.8333 6.66602 15.4602 6.66602 14.9999C6.66602 14.5397 6.29292 14.1666 5.83268 14.1666ZM14.166 14.9999C14.166 14.5397 14.5391 14.1666 14.9993 14.1666C15.4596 14.1666 15.8327 14.5397 15.8327 14.9999C15.8327 15.4602 15.4596 15.8333 14.9993 15.8333C14.5391 15.8333 14.166 15.4602 14.166 14.9999Z" fill="#187C18"/></svg>
+        <span class="t-label-lg-500">Doprava zdarma na vybrané způsoby dopravy</span>
+      </div>
+      <div class="free-delivery__bar"></div>
+    </div>
+
+    <div class="col">
+
+      <!-- PRODUCT 1 -->
+      <div class="product">
+        <div class="product__img" style="background:#d9c7b0;"></div>
+        <div class="product__body">
+          <div class="product__text">
+            <span class="product__name t-label-400">Hugo Boss <b>Boss Bottled</b></span>
+            <span class="product__sub t-body">parfémová voda pro muže 50 ml</span>
+          </div>
+          <div class="product__controls">
+            <div class="stepper">
+              <button class="stepper__btn"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+              <span class="stepper__count t-label-500">1</span>
+              <button class="stepper__btn" style="background:var(--color-background-secondary);"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+            </div>
+            <span class="product__price t-label-700">1 106 Kč</span>
+          </div>
+        </div>
+        <button class="product__remove"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M7.93141 7.05708L3.77252 2.86182L2.83789 3.80463L6.99678 7.99989L2.83789 12.1952L3.77252 13.138L7.93141 8.9427L12.0903 13.138L13.0249 12.1952L8.86605 7.99989L13.0249 3.80463L12.0903 2.86182L7.93141 7.05708Z" fill="#474747"/></svg></button>
+      </div>
+
+      <!-- PRODUCT 2 -->
+      <div class="product">
+        <div class="product__img" style="background:#2b2b33;"></div>
+        <div class="product__body">
+          <div class="product__text">
+            <span class="product__name t-label-400">Burberry <b>Mr. Burberry</b></span>
+            <span class="product__sub t-body">parfémová voda pro muže 30 ml</span>
+          </div>
+          <div class="product__controls">
+            <div class="stepper">
+              <button class="stepper__btn"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+              <span class="stepper__count t-label-500">1</span>
+              <button class="stepper__btn" style="background:var(--color-background-secondary);"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+            </div>
+            <span class="product__price t-label-700">1 306 Kč</span>
+          </div>
+        </div>
+        <button class="product__remove"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M7.93141 7.05708L3.77252 2.86182L2.83789 3.80463L6.99678 7.99989L2.83789 12.1952L3.77252 13.138L7.93141 8.9427L12.0903 13.138L13.0249 12.1952L8.86605 7.99989L13.0249 3.80463L12.0903 2.86182L7.93141 7.05708Z" fill="#474747"/></svg></button>
+      </div>
+
+      <!-- PRODUCT 3 (free gift item) -->
+      <div class="product">
+        <div class="product__img" style="background:#8f1d1d;"></div>
+        <div class="product__body">
+          <div class="product__text">
+            <span class="product__name t-label-400">Burberry <b>Multiline</b></span>
+            <span class="product__sub t-body">hrací karty</span>
+          </div>
+          <div class="product__controls">
+            <span class="static-count t-label-500" style="width:auto;padding-left:8px;">1</span>
+            <span class="product__price t-label-700">zdarma</span>
+          </div>
+        </div>
+        <button class="product__remove"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M7.93141 7.05708L3.77252 2.86182L2.83789 3.80463L6.99678 7.99989L2.83789 12.1952L3.77252 13.138L7.93141 8.9427L12.0903 13.138L13.0249 12.1952L8.86605 7.99989L13.0249 3.80463L12.0903 2.86182L7.93141 7.05708Z" fill="#474747"/></svg></button>
+      </div>
+
+      <!-- GIFT ACCORDION -->
+      <div class="gift">
+        <div class="gift__head">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.99668 2.78042C6.40905 2.57644 6.86897 2.48171 7.32887 2.50291C7.78879 2.52412 8.23792 2.66079 8.62896 2.90309C9.29346 3.31482 9.72671 3.90221 10 4.53197C10.2733 3.90221 10.7065 3.31482 11.371 2.90309C11.7621 2.66079 12.2112 2.52412 12.6711 2.50291C13.131 2.48171 13.5909 2.57644 14.0033 2.78042C14.416 2.98454 14.7695 3.29258 15.0211 3.6783C15.273 4.06461 15.4116 4.51249 15.4165 4.97432C15.4197 5.26938 15.3682 5.5599 15.267 5.83333H15.8333C16.7538 5.83333 17.5 6.57952 17.5 7.5V9.16667C17.5 9.78357 17.1648 10.3222 16.6667 10.6104V15.8333C16.6667 16.7538 15.9205 17.5 15 17.5H5C4.07953 17.5 3.33333 16.7538 3.33333 15.8333V10.6104C2.83517 10.3222 2.5 9.78357 2.5 9.16667V7.5C2.5 6.57952 3.24619 5.83333 4.16667 5.83333H4.73298C4.63179 5.5599 4.5803 5.26938 4.58347 4.97432C4.58844 4.51249 4.72704 4.06461 4.97895 3.6783C5.23048 3.29258 5.58404 2.98454 5.99668 2.78042ZM10.8333 7.5V9.16667H15.8333V7.5H10.8333ZM12.7986 5.83333C12.9702 5.83318 13.1366 5.79217 13.2815 5.71699C13.4347 5.63751 13.5544 5.52488 13.634 5.39713C13.7133 5.26996 13.7514 5.1303 13.75 4.99224C13.7485 4.85415 13.7073 4.71486 13.625 4.58868C13.5423 4.46191 13.4197 4.35115 13.2644 4.27432C13.1088 4.19735 12.93 4.15942 12.7479 4.16781C12.5658 4.17621 12.3934 4.23031 12.2489 4.31984C11.7616 4.62175 11.4631 5.18285 11.3306 5.83333H12.1871L12.2177 5.83234C12.2476 5.83147 12.2897 5.83046 12.3422 5.82975C12.4471 5.82835 12.5943 5.82817 12.7681 5.83293C12.7776 5.83319 12.7872 5.83332 12.7967 5.83333H12.7986ZM9.16667 7.5V9.16667H4.16667V7.5H9.16667ZM7.75112 4.31984C8.23838 4.62175 8.53693 5.18285 8.66935 5.83333H7.81285L7.78229 5.83234C7.75244 5.83147 7.71028 5.83046 7.65776 5.82975C7.55292 5.82835 7.40571 5.82817 7.2319 5.83293C7.22237 5.83319 7.21284 5.83332 7.20333 5.83333H7.20136C7.02981 5.83318 6.86337 5.79217 6.71849 5.71699C6.56531 5.63751 6.44556 5.52488 6.36596 5.39713C6.28674 5.26996 6.24856 5.1303 6.25004 4.99224C6.25153 4.85415 6.29273 4.71486 6.37501 4.58868C6.45768 4.46191 6.58031 4.35115 6.73564 4.27432C6.89123 4.19735 7.06999 4.15942 7.25211 4.16781C7.4342 4.17621 7.60663 4.23031 7.75112 4.31984ZM10.8333 10.8333H15V15.8333H10.8333V10.8333ZM9.16667 10.8333V15.8333H5V10.8333H9.16667Z" fill="#DC0069"/></svg>
+          <span class="gift__head-title t-label-500"><b>Zvolit k nákupu dárek zdarma</b></span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.63862 10.6891L8.00038 6.58232L12.362 10.6891L13.276 9.71837L8.0004 4.75098L2.72461 9.71835L3.63862 10.6891Z" fill="black"/></svg>
+        </div>
+        <div class="gift__list">
+          <span class="gift__sub t-label-500">Vyberte si váš dárek</span>
+          <div class="gift-option">
+            <div class="radio"></div>
+            <div class="gift-option__img" style="background:#1c1c1c;"></div>
+            <div class="gift-option__text">
+              <span class="gift-option__title t-label-400">Armani <b>Code</b></span>
+              <span class="gift-option__desc t-label-sm">sprchový gel pro muže 75 ml</span>
+            </div>
+          </div>
+          <div class="gift-option">
+            <div class="radio"></div>
+            <div class="gift-option__img" style="background:#1c1c1c;"></div>
+            <div class="gift-option__text">
+              <span class="gift-option__title t-label-400">Armani <b>Code</b></span>
+              <span class="gift-option__desc t-label-sm">sprchový gel pro muže 75 ml</span>
+            </div>
+          </div>
+          <div class="gift-option">
+            <div class="radio"></div>
+            <div class="gift-option__img" style="background:#1c1c1c;"></div>
+            <div class="gift-option__text">
+              <span class="gift-option__title t-label-400">Armani <b>Code</b></span>
+              <span class="gift-option__desc t-label-sm">sprchový gel pro muže 75 ml</span>
+            </div>
+          </div>
+          <div class="gift-option">
+            <div class="radio"></div>
+            <div class="gift-option__img" style="background:#1c1c1c;"></div>
+            <div class="gift-option__text">
+              <span class="gift-option__title t-label-400">Armani <b>Code</b></span>
+              <span class="gift-option__desc t-label-sm">sprchový gel pro muže 75 ml</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="services">
+        <div class="service">
+          <div class="service__row">
+            <div class="checkbox"></div>
+            <span class="service__title t-label-500">Zabalit jako dárek</span>
+            <svg class="service__info" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.16602 7.00008C1.16602 3.77842 3.77769 1.16675 6.99935 1.16675C10.221 1.16675 12.8327 3.77842 12.8327 7.00008C12.8327 10.2217 10.221 12.8334 6.99935 12.8334C3.77769 12.8334 1.16602 10.2217 1.16602 7.00008ZM6.27018 4.81258C6.27018 4.40987 6.59664 4.08341 6.99935 4.08341C7.40206 4.08341 7.72852 4.40987 7.72852 4.81258C7.72852 5.21529 7.40206 5.54175 6.99935 5.54175C6.59664 5.54175 6.27018 5.21529 6.27018 4.81258ZM7.58268 6.41675V9.91675H6.41602V6.41675H7.58268Z" fill="#6B6B6B"/></svg>
+            <span class="service__price t-label-500">120 Kč</span>
+          </div>
+          <p class="service__desc t-label-400" style="margin:0;">Rádi vám vše zabalíme do luxusního dárkového balení. <u>Více informací</u></p>
+        </div>
+        <div class="service">
+          <div class="service__row">
+            <div class="checkbox"></div>
+            <span class="service__title t-label-500">Zabalit ekologicky</span>
+            <svg class="service__info" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.16602 7.00008C1.16602 3.77842 3.77769 1.16675 6.99935 1.16675C10.221 1.16675 12.8327 3.77842 12.8327 7.00008C12.8327 10.2217 10.221 12.8334 6.99935 12.8334C3.77769 12.8334 1.16602 10.2217 1.16602 7.00008ZM6.27018 4.81258C6.27018 4.40987 6.59664 4.08341 6.99935 4.08341C7.40206 4.08341 7.72852 4.40987 7.72852 4.81258C7.72852 5.21529 7.40206 5.54175 6.99935 5.54175C6.59664 5.54175 6.27018 5.21529 6.27018 4.81258ZM7.58268 6.41675V9.91675H6.41602V6.41675H7.58268Z" fill="#6B6B6B"/></svg>
+            <span class="service__price t-label-500">25 Kč</span>
+          </div>
+          <p class="service__desc t-label-400" style="margin:0;">Pomozte nám šetřit životní prostředí a využijte balení z recyklovaného materiálu bez plastu. Tato služba není dostupná při doručení objednávky do obchodů Notino a jejich výdejních míst.</p>
+        </div>
+        <div class="service">
+          <div class="service__row">
+            <div class="checkbox"></div>
+            <span class="service__title t-label-500">Pojistit zásilku</span>
+            <span class="service__price t-label-500">20 Kč</span>
+          </div>
+          <p class="service__desc t-label-400" style="margin:0;">V případě poškození či ztráty zásilky nečekáte na vyřešení situace v zákonné lhůtě. Stačí, když nám ztracenou nebo poškozenou zásilku nahlásíte a zdokumentujete, a my Vám obratem pošleme úplně nové zboží.</p>
+        </div>
+      </div>
+
+      <!-- DISCOUNT LINE -->
+      <div class="disc-line t-label-500">Sleva na dopravu 100 %</div>
+
+      <!-- VOUCHER -->
+      <div class="voucher">
+        <span class="voucher__title t-label-500">Kód dárkového poukazu nebo slevy</span>
+        <div class="voucher__box">
+          <input class="voucher__input" placeholder="Zadejte váš slevový kód">
+          <button class="voucher__apply t-label-500">Použít</button>
+        </div>
+      </div>
+
+      <!-- NOTINO CLUB -->
+      <div class="club">
+        <span class="club__title t-label-500">Notino Club</span>
+        <div class="club__banner">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10.4375 18.3332C10.4375 18.3332 11.5521 15.8019 13.6773 13.6751C15.8026 11.5483 18.3322 10.4385 18.3322 10.4385C10.4594 10.4385 10.443 10.4603 10.443 18.3332H10.4375Z" fill="#DC0069"/><path d="M9.5625 18.3332C9.5625 18.3332 8.44795 15.8019 6.32265 13.6751C4.19736 11.5483 1.66776 10.4385 1.66776 10.4385C9.54065 10.4385 9.55704 10.4603 9.55704 18.3332H9.5625Z" fill="#DC0069"/><path d="M10.4375 1.6665C10.4375 1.6665 11.5521 4.19785 13.6773 6.32462C15.8026 8.45139 18.3322 9.56124 18.3322 9.56124C10.4594 9.56124 10.443 9.53937 10.443 1.6665H10.4375Z" fill="#DC0069"/><path d="M9.5625 1.6665C9.5625 1.6665 8.44795 4.19785 6.32265 6.32462C4.19736 8.45139 1.66776 9.56124 1.66776 9.56124C9.54065 9.56124 9.55704 9.53937 9.55704 1.6665H9.5625Z" fill="#DC0069"/></svg>
+          <span class="club__banner-text t-label-400">Z této objednávky získáte <b>2 412 bodů</b>!</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TOTAL -->
+    <div class="total">
+      <span class="total__label t-label-lg-400">Celková cena včetně DPH</span>
+      <span class="total__amount t-title-lg">2 412 Kč</span>
+    </div>
+
+  </main>
+
+  <!-- CTA -->
+  <div class="cta">
+    <button class="btn btn--primary">K pokladně</button>
+    <button class="btn btn--secondary">Zpět do obchodu</button>
+  </div>
+
+</div>
+</body>
+</html>
