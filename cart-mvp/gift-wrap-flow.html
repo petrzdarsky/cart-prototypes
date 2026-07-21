@@ -272,14 +272,15 @@
     </div>
 
     <div class="section" id="giftWrapSection">
-      <div class="gift-header-row">
+      <div class="service-row">
         <label class="checkbox-row">
           <input type="checkbox" id="giftWrapToggle">
           <span>Zabalit jako dárek <i class="info-icon">i</i></span>
         </label>
+        <div class="price" id="giftWrapPrice">145 Kč</div>
         <button class="link-std" id="addPackageLink" style="display:none;">Přidat balení</button>
       </div>
-      <p class="gift-desc" id="giftWrapDesc" style="display:none;">Rádi vám vše zabalíme do luxusního dárkového balení.</p>
+      <p class="service-desc">Rádi vám vše zabalíme do luxusního dárkového balení.</p>
       <div id="packagesList"></div>
     </div>
 
@@ -348,7 +349,7 @@
         <span>145 Kč</span>
       </div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" id="modalFooter">
       <button class="cta-primary" id="createBtn">Vytvořit dárkové balení</button>
       <button class="cta-secondary" id="addAnotherBtn">Přidat další balíček</button>
     </div>
@@ -398,7 +399,7 @@
   const productsListEl = $('#productsList');
   const giftToggle = $('#giftWrapToggle');
   const addPackageLink = $('#addPackageLink');
-  const giftDesc = $('#giftWrapDesc');
+  const giftWrapPrice = $('#giftWrapPrice');
   const packagesList = $('#packagesList');
   const modalOverlay = $('#modalOverlay');
   const modalBody = $('#modalBody');
@@ -409,6 +410,9 @@
   const ecoCheckbox = $('#ecoCheckbox');
   const priorityCheckbox = $('#priorityCheckbox');
   const totalPriceEl = $('#totalPrice');
+  const createBtn = $('#createBtn');
+  const addAnotherBtn = $('#addAnotherBtn');
+  const modalFooter = $('#modalFooter');
   const toast = $('#toast');
 
   function formatCZK(amount){
@@ -555,7 +559,14 @@
     });
   }
 
+  function updateGiftWrapHeaderSlot(){
+    const hasPackages = packages.length > 0;
+    giftWrapPrice.style.display = hasPackages ? 'none' : 'block';
+    addPackageLink.style.display = hasPackages ? 'inline' : 'none';
+  }
+
   function renderPackagesList(){
+    updateGiftWrapHeaderSlot();
     if(packages.length === 0){
       packagesList.innerHTML = '';
       return;
@@ -598,8 +609,6 @@
 
   function updateGiftSectionVisibility(){
     const on = giftToggle.checked;
-    addPackageLink.style.display = on ? 'inline' : 'none';
-    giftDesc.style.display = on ? 'block' : 'none';
     if(!on){
       packages = [];
       renderPackagesList();
@@ -627,6 +636,10 @@
     document.querySelector('.frame').scrollTop = 0;
   }
 
+  function updateModalButtons(){
+    createBtn.textContent = editingId ? 'Uložit' : 'Vytvořit dárkové balení';
+  }
+
   function openModal(pkgId){
     editingId = pkgId || null;
     const prefill = editingId ? packages.find(p=>p.id===editingId) : null;
@@ -634,6 +647,7 @@
     renderSwatches();
     renderBoxPreview();
     renderPickList();
+    updateModalButtons();
     modalOverlay.classList.remove('hidden');
     scrollModalToTop();
   }
@@ -699,6 +713,7 @@
     renderSwatches();
     renderBoxPreview();
     renderPickList();
+    updateModalButtons();
     scrollModalToTop();
   });
 
